@@ -1,5 +1,6 @@
 const a = require('http')
-const fs = require('fs')
+const fs = require('fs');
+const { markAsUntransferable } = require('worker_threads');
 const res = a.createServer((req,res)=>{
 
     const url = req.url;
@@ -12,7 +13,17 @@ const res = a.createServer((req,res)=>{
         return res.end();
     }
     if (url==='/message' && method==='POST'){
-        fs.writeFileSync('message.text','Message recieved');
+        const body = [];
+        req.on('data',(chunk)=>{
+            console.log(chunk);
+            body.push(chunk);
+        });
+        req.on('end',()=>{
+            const res = Buffer.concat(body).toString();
+            const ans = res.split('=')[1];
+            fs.writeFileSync('message.text',ans);
+        })
+
         res.statusCode = 302;
         res.setHeader('Location','/')
         return res.end();
