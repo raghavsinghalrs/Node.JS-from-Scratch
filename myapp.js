@@ -1,7 +1,6 @@
 const a = require('http')
 const fs = require('fs');
-const { markAsUntransferable } = require('worker_threads');
-const res = a.createServer((req,res)=>{
+const server = a.createServer((req,res)=>{
 
     const url = req.url;
     const method = req.method;
@@ -18,22 +17,23 @@ const res = a.createServer((req,res)=>{
             console.log(chunk);
             body.push(chunk);
         });
-        req.on('end',()=>{
-            const res = Buffer.concat(body).toString();
-            const ans = res.split('=')[1];
-            fs.writeFileSync('message.text',ans);
+        return req.on('end',()=>{
+            const x = Buffer.concat(body).toString();
+            const ans = x.split('=')[1];
+            fs.writeFile('message.text',ans, err =>{
+                res.statusCode = 302;
+                res.setHeader('Location','/');
+                return res.end();
+            });
         })
 
-        res.statusCode = 302;
-        res.setHeader('Location','/')
-        return res.end();
     }
-    // console.log(req.headers);
-    // res.write('<html>');
-    // res.write('<head><title>First Doc</title></head>')
-    // res.write('<body>Bhaijaan</body>')
-    // res.write('</html')
-    // res.end();
+    res.setHeader('Content-Type','text/html');
+    res.write('<html>');
+    res.write('<head><title>First Doc</title></head>')
+    res.write('<body>Bhaijaan</body>')
+    res.write('</html')
+    res.end();
 });
 
-res.listen(3000);
+server.listen(3000);
