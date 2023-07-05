@@ -1,39 +1,40 @@
-const a = require('http')
+const http = require('http');
 const fs = require('fs');
-const server = a.createServer((req,res)=>{
 
-    const url = req.url;
-    const method = req.method;
-    if (url==='/'){
-        res.write('<html>');
-        res.write('<head><title>Enter message</title></head>')
-        res.write('<body><form action="/message" method="POST"><input type="text" name="message"><button type="submit">Send</button></body>')
-        res.write('</html')
-        return res.end();
+// function request_listener(resolve,reject){
+
+// }
+const server = http.createServer((request,response)=>{
+    const method = request.method;
+    const url = request.url;
+    if(url==='/'){
+        fs.readFile('message.txt',{encoding:"utf-8"},(err,data)=>{
+            response.write('<html>');
+            response.write('<head><title>NodeJS</title></head>');
+            response.write(`<body>${data}</body>`);
+            response.write('<body><form action="/message" method="POST"><input type="text" name="message"><button type="submit">Send</button></form></body>');
+            response.write('</html>')
+            return response.end();
+        })
     }
-    if (url==='/message' && method==='POST'){
+    if(url==='/message' && method=='POST'){
         const body = [];
-        req.on('data',(chunk)=>{
+        request.on('data',(chunk)=>{
             console.log(chunk);
             body.push(chunk);
-        });
-        return req.on('end',()=>{
-            const x = Buffer.concat(body).toString();
-            const ans = x.split('=')[1];
-            fs.writeFile('message.text',ans, err =>{
-                res.statusCode = 302;
-                res.setHeader('Location','/');
-                return res.end();
+        })
+        return request.on('end',()=>{
+            const parsedbody = Buffer.concat(body).toString();
+            console.log(parsedbody);
+            const message = parsedbody.split("=")[1]
+            fs.writeFile('message.txt',message,err=>{
+                response.statusCode = 302;
+                response.setHeader('Location','/');
+                return response.end();
             });
         })
-
     }
-    res.setHeader('Content-Type','text/html');
-    res.write('<html>');
-    res.write('<head><title>First Doc</title></head>')
-    res.write('<body>Bhaijaan</body>')
-    res.write('</html')
-    res.end();
+
 });
 
 server.listen(3000);
